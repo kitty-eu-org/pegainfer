@@ -7,8 +7,10 @@ use safetensors::SafeTensors;
 use std::fs;
 use std::time::Instant;
 
+use rand::RngExt;
 use rand::rngs::StdRng;
 
+use cudarc::driver::CudaSlice;
 use cudarc::driver::safe::CudaGraph;
 use cudarc::driver::sys::CUgraphInstantiate_flags_enum::CUDA_GRAPH_INSTANTIATE_FLAG_AUTO_FREE_ON_LAUNCH;
 use cudarc::driver::sys::CUstreamCaptureMode_enum::CU_STREAM_CAPTURE_MODE_THREAD_LOCAL;
@@ -406,10 +408,16 @@ impl Qwen3Model {
         logits: &DeviceVec,
         params: &SamplingParams,
         rng: &mut StdRng,
+        sample_probs: Option<&mut CudaSlice<f32>>,
     ) -> Result<u32> {
         if params.is_greedy() {
             ops::argmax(&self.ctx, logits)
+        } else if let Some(probs) = sample_probs {
+            // GPU sampling: temperature → softmax → top-k → top-p → multinomial
+            let random_val: f32 = rng.random();
+            ops::gpu_sample(&self.ctx, logits, probs, params, random_val)
         } else {
+            // CPU fallback (prefill first token — only called once)
             let logits_f32 = logits.to_host(&self.ctx)?;
             Ok(sampler::sample(&logits_f32, params, rng))
         }
@@ -686,7 +694,7 @@ impl Qwen3Model {
             let hidden = self.get_embeddings_batch(&tokens)?;
             let hidden = self.process_all_layers_batch(hidden, start_pos, &mut kv_cache)?;
             let logits = self.compute_logits_batch(&hidden)?;
-            self.select_token(&logits, params, rng)?
+            self.select_token(&logits, params, rng, None)?
         };
 
         let ttft = ttft_start.elapsed();
@@ -717,7 +725,7 @@ impl Qwen3Model {
                     &mut bufs,
                     &mut graph_state,
                 )?;
-                self.select_token(&bufs.logits, params, rng)?
+                self.select_token(&bufs.logits, params, rng, Some(&mut bufs.sample_probs))?
             };
 
             if next_token == self.config.eos_token_id {
@@ -792,7 +800,7 @@ impl Qwen3Model {
             let hidden = self.get_embeddings_batch(&tokens)?;
             let hidden = self.process_all_layers_batch(hidden, start_pos, &mut kv_cache)?;
             let logits = self.compute_logits_batch(&hidden)?;
-            self.select_token(&logits, params, rng)?
+            self.select_token(&logits, params, rng, None)?
         };
 
         let ttft = ttft_start.elapsed();
@@ -831,7 +839,7 @@ impl Qwen3Model {
                     &mut bufs,
                     &mut graph_state,
                 )?;
-                self.select_token(&bufs.logits, params, rng)?
+                self.select_token(&bufs.logits, params, rng, Some(&mut bufs.sample_probs))?
             };
 
             if next_token == self.config.eos_token_id {

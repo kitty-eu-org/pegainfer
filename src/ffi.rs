@@ -74,6 +74,18 @@ unsafe extern "C" {
 
     pub fn argmax_cuda(x: *const Half, out: *mut i32, n: i32, stream: CUstream);
 
+    pub fn gpu_sample_cuda(
+        logits: *const Half,
+        probs_scratch: *mut f32,
+        output: *mut i32,
+        vocab_size: i32,
+        inv_temperature: f32,
+        top_k: i32,
+        top_p: f32,
+        random_val: f32,
+        stream: CUstream,
+    );
+
     pub fn attention_scores_cuda(
         q: *const Half,
         k_cache: *const Half,

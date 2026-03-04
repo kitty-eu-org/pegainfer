@@ -35,6 +35,8 @@ pub struct DecodeBuffers {
     pub logits: DeviceVec,
     /// Decode metadata on GPU: [token_id, current_pos, seq_len] as i32
     pub decode_meta: CudaSlice<i32>,
+    /// FP32 scratch buffer for GPU sampling softmax (vocab_size)
+    pub sample_probs: CudaSlice<f32>,
 }
 
 impl DecodeBuffers {
@@ -58,6 +60,10 @@ impl DecodeBuffers {
                 .stream
                 .alloc_zeros(3)
                 .map_err(|e| anyhow::anyhow!("Alloc decode_meta failed: {}", e))?,
+            sample_probs: ctx
+                .stream
+                .alloc_zeros(config.vocab_size)
+                .map_err(|e| anyhow::anyhow!("Alloc sample_probs failed: {}", e))?,
         })
     }
 }
