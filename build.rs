@@ -87,9 +87,9 @@ fn detect_sm_targets() -> Vec<String> {
 
     // Fallback: build for Ampere (bf16 baseline) when GPU detection is unavailable.
     print!(
-        "cargo:warning=Failed to detect GPU SMs via nvidia-smi. Set PEGAINFER_CUDA_SM/CUDA_SM environment variable to override."
+        "cargo:warning=Failed to detect GPU SMs via nvidia-smi. Falling back to sm_80. Set PEGAINFER_CUDA_SM/CUDA_SM to override."
     );
-    panic!("GPU detection failed");
+    vec!["80".to_string()]
 }
 
 fn nvcc_arch_args(sm_targets: &[String]) -> Vec<String> {
@@ -112,6 +112,12 @@ fn nvcc_arch_args(sm_targets: &[String]) -> Vec<String> {
 }
 
 fn main() {
+    if std::env::var_os("CARGO_FEATURE_CUDA").is_none() {
+        println!("cargo:rerun-if-changed=csrc/");
+        println!("cargo:rerun-if-env-changed=CARGO_FEATURE_CUDA");
+        return;
+    }
+
     let cuda_path = std::env::var("CUDA_HOME")
         .or_else(|_| std::env::var("CUDA_PATH"))
         .unwrap_or_else(|_| "/usr/local/cuda".to_string());

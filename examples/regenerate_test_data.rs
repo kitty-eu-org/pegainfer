@@ -1,22 +1,32 @@
 //! Regenerate test_data/Qwen3-4B.json using pegainfer's greedy output.
 //! Run: cargo run -r --example regenerate_test_data
 
+#[cfg(feature = "cuda")]
 use pegainfer::model::Qwen3Model;
+#[cfg(feature = "cuda")]
 use pegainfer::sampler::SamplingParams;
+#[cfg(feature = "cuda")]
 use pegainfer::tokenizer::Tokenizer;
-use rand::SeedableRng;
+#[cfg(feature = "cuda")]
 use rand::rngs::StdRng;
+#[cfg(feature = "cuda")]
+use rand::SeedableRng;
+#[cfg(feature = "cuda")]
 use serde::{Deserialize, Serialize};
 
+#[cfg(feature = "cuda")]
 const MODEL_PATH: &str = concat!(env!("CARGO_MANIFEST_DIR"), "/models/Qwen3-4B");
+#[cfg(feature = "cuda")]
 const OUTPUT_PATH: &str = concat!(env!("CARGO_MANIFEST_DIR"), "/test_data/Qwen3-4B.json");
 
+#[cfg(feature = "cuda")]
 #[derive(Deserialize)]
 struct InputData {
     model_name: String,
     cases: Vec<InputCase>,
 }
 
+#[cfg(feature = "cuda")]
 #[derive(Deserialize)]
 struct InputCase {
     name: String,
@@ -26,6 +36,7 @@ struct InputCase {
     output: String,
 }
 
+#[cfg(feature = "cuda")]
 #[derive(Serialize)]
 struct OutputData {
     model_name: String,
@@ -33,6 +44,7 @@ struct OutputData {
     cases: Vec<OutputCase>,
 }
 
+#[cfg(feature = "cuda")]
 #[derive(Serialize)]
 struct OutputCase {
     name: String,
@@ -41,6 +53,7 @@ struct OutputCase {
     output: String,
 }
 
+#[cfg(feature = "cuda")]
 fn main() {
     pegainfer::logging::init_stderr("info");
 
@@ -82,4 +95,9 @@ fn main() {
     let json = serde_json::to_string_pretty(&output).expect("serialize failed");
     std::fs::write(OUTPUT_PATH, json).expect("Failed to write test data");
     eprintln!("\nWrote {OUTPUT_PATH}");
+}
+
+#[cfg(not(feature = "cuda"))]
+fn main() {
+    eprintln!("`regenerate_test_data` requires `--features cuda`.");
 }

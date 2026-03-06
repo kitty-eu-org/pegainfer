@@ -38,6 +38,7 @@ The goal is not to replace vLLM or TensorRT-LLM — it's to understand every lay
 - FlashAttention-level kernel optimization
 - Multi-GPU / tensor parallelism
 - Quantization (INT8/INT4)
+- High-performance Metal path (decode attention runs on Metal kernels with device KV cache and reused decode buffers; kernels are still correctness-first and not yet tuned)
 
 ## Quickstart
 
@@ -65,6 +66,15 @@ cargo run --release -- --cuda-graph=false
 
 # Run tests
 cargo test --release
+
+# macOS Metal backend build (no CUDA)
+cargo check --no-default-features --features metal
+
+# Run Metal primitive op tests
+cargo test --no-default-features --features metal --lib metal_backend::ops
+
+# Run server with Metal backend
+cargo run --no-default-features --features metal -- --backend metal
 ```
 
 ### Download Model

@@ -14,7 +14,7 @@ serde_json = "1.0"
 axum = "0.8"
 tokio = { version = "1", features = ["full"] }
 uuid = { version = "1", features = ["v4"] }
-cudarc = { version = "0.18", features = [
+cudarc = { version = "0.18", optional = true, features = [
     "cuda-version-from-build-system",
     "cublas",
     "cuda-12080",
@@ -28,8 +28,12 @@ clap = { version = "4.5.57", features = ["derive"] }
 rand = "0.10"
 tokio-stream = "0.1"
 futures-util = "0.3"
+metal = { version = "0.31", optional = true }
 
 [features]
+default = ["cuda"]
+cuda = ["dep:cudarc"]
+metal = ["dep:metal"]
 reference = []
 
 [build-dependencies]

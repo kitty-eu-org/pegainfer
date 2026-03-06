@@ -1,14 +1,25 @@
-pub mod decode_buffers;
-pub mod ffi;
 pub mod http_server;
-pub mod kv_cache;
 pub mod logging;
-pub mod model;
-pub mod ops;
 pub mod qwen3_config;
 pub mod sampler;
 pub mod server_engine;
-pub mod tensor;
 pub mod tokenizer;
 pub mod trace_reporter;
+
+#[cfg(feature = "metal")]
+pub mod metal_backend;
+
+#[cfg(feature = "cuda")]
+pub mod decode_buffers;
+#[cfg(feature = "cuda")]
+pub mod ffi;
+#[cfg(feature = "cuda")]
+pub mod kv_cache;
+#[cfg(feature = "cuda")]
+pub mod model;
+#[cfg(feature = "cuda")]
+pub mod ops;
+#[cfg(feature = "cuda")]
+pub mod tensor;
+#[cfg(feature = "cuda")]
 pub mod weight_loader;

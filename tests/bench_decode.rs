@@ -6,11 +6,13 @@
 //!
 //!   nsys stats decode_trace.nsys-rep
 
+#![cfg(feature = "cuda")]
+
 use pegainfer::model::{ModelRuntimeConfig, Qwen3Model};
 use pegainfer::sampler::SamplingParams;
 use pegainfer::tokenizer::Tokenizer;
-use rand::SeedableRng;
 use rand::rngs::StdRng;
+use rand::SeedableRng;
 use std::time::{Duration, Instant};
 
 const MODEL_PATH: &str = concat!(env!("CARGO_MANIFEST_DIR"), "/models/Qwen3-4B");
